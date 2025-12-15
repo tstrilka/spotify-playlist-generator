@@ -26,14 +26,38 @@ def read_songs(filepath: str) -> list[str]:
     return songs
 
 
-def search_track(sp: spotipy.Spotify, query: str) -> str | None:
+def get_artist_genres(sp: spotipy.Spotify, artist_id: str) -> list[str]:
+    """Get genres for an artist."""
+    try:
+        artist = sp.artist(artist_id)
+        return [g.lower() for g in artist.get("genres", [])]
+    except:
+        return []
+
+
+def search_track(
+    sp: spotipy.Spotify, query: str, exclude_genres: list[str] | None = None
+) -> str | None:
     """Search for a track and return its URI if found."""
     try:
         results = sp.search(q=query, type="track", limit=1)
         tracks = results.get("tracks", {}).get("items", [])
         if tracks:
             track = tracks[0]
-            print(f"  Found: {track['artists'][0]['name']} - {track['name']}")
+            artist_name = track['artists'][0]['name']
+            track_name = track['name']
+
+            # Check genre filter
+            if exclude_genres:
+                artist_id = track['artists'][0]['id']
+                genres = get_artist_genres(sp, artist_id)
+                for genre in genres:
+                    for excluded in exclude_genres:
+                        if excluded in genre:
+                            print(f"  Skipped (genre '{genre}'): {artist_name} - {track_name}")
+                            return None
+
+            print(f"  Found: {artist_name} - {track_name}")
             return track["uri"]
         else:
             print(f"  Not found: {query}")
@@ -62,13 +86,38 @@ def add_tracks_to_playlist(sp: spotipy.Spotify, playlist_id: str, track_uris: li
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create a Spotify playlist from a text file of songs"
+        description="Create a Spotify playlist from a text file of songs",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s songs.txt "My Playlist"
+      Create a public playlist from songs.txt
+
+  %(prog)s songs.txt "Chill Vibes" -d "Relaxing music" --private
+      Create a private playlist with description
+
+  %(prog)s songs.txt "Rock Playlist" -x "rap,hip hop,trap"
+      Create playlist excluding rap/hip-hop genres
+
+Input file format (one song per line):
+  Artist - Track Name
+  Daft Punk - Get Lucky
+  The Weeknd - Blinding Lights
+"""
     )
     parser.add_argument("songs_file", help="Path to text file with songs (one per line: Artist - Track)")
     parser.add_argument("playlist_name", help="Name for the new playlist")
     parser.add_argument("--description", "-d", default="", help="Playlist description")
     parser.add_argument("--private", action="store_true", help="Make playlist private")
+    parser.add_argument(
+        "--exclude-genres", "-x",
+        default="",
+        help="Comma-separated genres to exclude (e.g., 'rap,hip hop')"
+    )
     args = parser.parse_args()
+
+    # Parse excluded genres
+    exclude_genres = [g.strip().lower() for g in args.exclude_genres.split(",") if g.strip()]
 
     # Check for credentials
     client_id = os.environ.get("SPOTIFY_CLIENT_ID")
@@ -117,9 +166,11 @@ def main():
 
     # Search for each track
     print("Searching for tracks...")
+    if exclude_genres:
+        print(f"Excluding genres: {', '.join(exclude_genres)}\n")
     track_uris = []
     for song in songs:
-        uri = search_track(sp, song)
+        uri = search_track(sp, song, exclude_genres=exclude_genres or None)
         if uri:
             track_uris.append(uri)
 
