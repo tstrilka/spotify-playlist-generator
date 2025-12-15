@@ -1,6 +1,6 @@
 # Spotify Playlist Generator
 
-Create Spotify playlists from a text file or scrape songs from ExpressFM radio.
+Create Spotify playlists from a text file or scrape songs from Czech radio stations (ExpressFM, Radio 1).
 
 ## Setup
 
@@ -69,7 +69,20 @@ python scrape_expresfm.py -o songs.txt
 python spotify_playlist.py songs.txt "ExpressFM Playlist" -x "rap,hip hop"
 ```
 
-Scraper options:
+### Scrape Radio 1
+
+Scrape songs from Radio 1's weekly program schedule:
+
+```bash
+# Scrape songs from Radio 1 program
+python scrape_radio1.py -o songs.txt
+
+# Create Spotify playlist
+python spotify_playlist.py songs.txt "Radio 1 Playlist"
+```
+
+### Scraper Options (both scrapers)
+
 - `-o, --output`: Output file (default: songs.txt)
 - `--limit`: Limit number of songs (0 = all)
 - `--no-headless`: Show browser window (for debugging)
@@ -94,6 +107,7 @@ Tame Impala - The Less I Know The Better
 spotify-playlist-generator/
 ├── spotify_playlist.py   # Main script - creates Spotify playlists
 ├── scrape_expresfm.py    # Scrapes ExpressFM radio playlist
+├── scrape_radio1.py      # Scrapes Radio 1 program schedule
 ├── requirements.txt      # Python dependencies
 ├── songs.txt             # Example song list
 ├── .env                  # Spotify credentials (not in git)

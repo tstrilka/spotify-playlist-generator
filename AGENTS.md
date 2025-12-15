@@ -1,7 +1,7 @@
 # Spotify Playlist Generator
 
 ## Overview
-Python CLI tool that creates Spotify playlists from a text file of songs. Can also scrape songs from ExpressFM radio station. Supports genre filtering to exclude unwanted music styles.
+Python CLI tool that creates Spotify playlists from a text file of songs. Can also scrape songs from Czech radio stations (ExpressFM, Radio 1). Supports genre filtering to exclude unwanted music styles.
 
 ## Tech Stack
 - Python 3
@@ -13,6 +13,7 @@ Python CLI tool that creates Spotify playlists from a text file of songs. Can al
 ```
 spotify_playlist.py   # Main script - handles auth, search, playlist creation
 scrape_expresfm.py    # Scrapes ExpressFM playlist page
+scrape_radio1.py      # Scrapes Radio 1 program schedule
 requirements.txt      # Dependencies
 songs.txt             # Input file (one song per line: "Artist - Track Name")
 .env                  # Spotify API credentials (not in git)
@@ -31,6 +32,12 @@ songs.txt             # Input file (one song per line: "Artist - Track Name")
 ### scrape_expresfm.py
 - `handle_consent()` - Handles Seznam.cz cookie consent dialog
 - `scrape_playlist()` - Scrapes ExpressFM playlist, returns (artist, title) tuples
+- `format_song()` - Formats song for Spotify search
+
+### scrape_radio1.py
+- `handle_consent()` - Handles cookie consent dialog
+- `parse_song_line()` - Parses "Artist - Title" format from text
+- `scrape_program()` - Scrapes Radio 1 program page (https://www.radio1.cz/program/), returns (artist, title) tuples
 - `format_song()` - Formats song for Spotify search
 
 ## Authentication
@@ -59,10 +66,17 @@ python scrape_expresfm.py -o songs.txt
 python spotify_playlist.py songs.txt "ExpressFM Playlist" -x "rap,hip hop"
 ```
 
-### Scraper options
+### Scrape Radio 1 and create playlist
+```bash
+python scrape_radio1.py -o songs.txt
+python spotify_playlist.py songs.txt "Radio 1 Playlist"
+```
+
+### Scraper options (both scrapers)
 ```bash
 python scrape_expresfm.py -o songs.txt --limit 50  # Limit to 50 songs
 python scrape_expresfm.py --no-headless            # Show browser (debug)
+python scrape_radio1.py -o songs.txt --limit 100   # Radio 1 with limit
 ```
 
 ## Input Format
